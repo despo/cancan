@@ -100,7 +100,6 @@ module CanCan
         if override_scope
           @model_class.scoped.merge(override_scope)
         elsif @model_class.respond_to?(:where) && @model_class.respond_to?(:joins)
-          mergeable_conditions = @rules.select {|rule| rule.unmergeable? }.blank?
           if mergeable_conditions
             @model_class.where(conditions).joins(joins)
           else
@@ -123,6 +122,10 @@ module CanCan
             raise Error, "Unable to merge an Active Record scope with other conditions. Instead use a hash or SQL for #{rule.actions.first} #{rule.subjects.first} ability."
           end
         end
+      end
+
+      def mergeable_conditions
+        @rules.select {|rule| rule.unmergeable? }.blank?
       end
 
       def merge_conditions(sql, conditions_hash, behavior)
