@@ -113,15 +113,17 @@ module CanCan
       private
 
       def override_scope
-        conditions = @rules.map(&:conditions).compact
-        if defined?(ActiveRecord::Relation) && conditions.any? { |c| c.kind_of?(ActiveRecord::Relation) }
-          if conditions.size == 1
-            conditions.first
-          else
-            rule = @rules.detect { |rule| rule.conditions.kind_of?(ActiveRecord::Relation) }
-            raise Error, "Unable to merge an Active Record scope with other conditions. Instead use a hash or SQL for #{rule.actions.first} #{rule.subjects.first} ability."
-          end
+        rule = rule_with_active_record_conditions(@rules)
+        if rule.present?
+          conditions = @rules.map(&:conditions).compact
+          return conditions.first if conditions.size == 1
+
+          raise Error, "Unable to merge an Active Record scope with other conditions. Instead use a hash or SQL for #{rule.actions.first} #{rule.subjects.first} ability."
         end
+      end
+
+      def rule_with_active_record_conditions(rules)
+        rules.detect {|rule| rule.conditions.kind_of?(ActiveRecord::Relation) } if defined?(ActiveRecord::Relation)
       end
 
       def mergeable_conditions
