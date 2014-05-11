@@ -166,11 +166,9 @@ module CanCan
 
       # Removes empty hashes and moves everything into arrays.
       def clean_joins(joins_hash)
-        joins = []
-        joins_hash.each do |name, nested|
+        joins_hash.inject([]) do |joins, (name, nested)|
           joins << (nested.empty? ? name : {name => clean_joins(nested)})
         end
-        joins
       end
     end
   end
