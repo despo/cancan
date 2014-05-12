@@ -167,16 +167,14 @@ module CanCan
     # If the :shallow option is passed it will use the resource_class if there's no parent
     # If the :singleton option is passed it won't use the association because it needs to be handled later.
     def resource_base
-      if @options[:through]
-        if parent_resource
-          @options[:singleton] ? resource_class : parent_resource.send(@options[:through_association] || name.to_s.pluralize)
-        elsif @options[:shallow]
-          resource_class
-        else
-          raise AccessDenied.new(nil, authorization_action, resource_class) # maybe this should be a record not found error instead?
-        end
-      else
+      return resource_class unless @options[:through]
+
+      if parent_resource
+        @options[:singleton] ? resource_class : parent_resource.send(through_association_or_name)
+      elsif @options[:shallow]
         resource_class
+      else
+        raise AccessDenied.new(nil, authorization_action, resource_class) # maybe this should be a record not found error instead?
       end
     end
 
@@ -262,6 +260,10 @@ module CanCan
 
     def finder_for(param)
       "find_by_#{param}!"
+    end
+
+    def through_association_or_name
+      @options[:through_association] || name.to_s.pluralize
     end
 
     def extract_key(value)
