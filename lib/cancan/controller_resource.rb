@@ -48,13 +48,10 @@ module CanCan
 
     def skip?(behavior) # This could probably use some refactoring
       options = @controller.class.cancan_skipper[behavior][@name]
+
       if options.nil?
         false
-      elsif options == {}
-        true
-      elsif options[:except] && ![options[:except]].flatten.include?(@params[:action].to_sym)
-        true
-      elsif [options[:only]].flatten.include?(@params[:action].to_sym)
+      elsif options == {} or except_with_no_action?(options) or only_with_action?(options)
         true
       end
     end
@@ -265,6 +262,15 @@ module CanCan
     def through_association_or_name
       @options[:through_association] || name.to_s.pluralize
     end
+
+    def except_with_no_action?(options)
+      options[:except] && ![options[:except]].flatten.include?(@params[:action].to_sym)
+    end
+
+    def only_with_action?(options)
+      [options[:only]].flatten.include?(@params[:action].to_sym)
+    end
+
 
     def extract_key(value)
       value.to_s.underscore.gsub('/', '_')
