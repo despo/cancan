@@ -103,18 +103,16 @@ module CanCan
     def find_resource
       if @options[:singleton] && parent_resource.respond_to?(name)
         parent_resource.send(name)
-      else
-        if @options[:find_by]
-          if resource_base.respond_to? "find_by_#{@options[:find_by]}!"
-            resource_base.send("find_by_#{@options[:find_by]}!", id_param)
-          elsif resource_base.respond_to? "find_by"
-            resource_base.send("find_by", { @options[:find_by].to_sym => id_param })
-          else
-            resource_base.send(@options[:find_by], id_param)
-          end
+      elsif find_by_param
+        if resource_base.respond_to?(finder_for(find_by_param))
+          resource_base.send(finder_for(find_by_param), id_param)
+        elsif resource_base.respond_to? "find_by"
+          resource_base.send("find_by", { find_by_param.to_sym => id_param })
         else
-          adapter.find(resource_base, id_param)
+          resource_base.send(find_by_param, id_param)
         end
+      else
+        adapter.find(resource_base, id_param)
       end
     end
 
@@ -254,8 +252,16 @@ module CanCan
 
     private
 
+    def find_by_param
+      @options[:find_by]
+    end
+
+    def finder_for(param)
+      "find_by_#{param}!"
+    end
+
     def extract_key(value)
-       value.to_s.underscore.gsub('/', '_')
+      value.to_s.underscore.gsub('/', '_')
     end
   end
 end
