@@ -63,26 +63,28 @@ module CanCan
       end
 
       def tableized_conditions(conditions, model_class = @model_class)
-        return conditions unless conditions.kind_of? Hash
-        conditions.inject({}) do |result_hash, (name, value)|
-          if value.kind_of? Hash
+        return conditions unless conditions.kind_of?(Hash)
+
+        conditions.inject({}) do |result, (name, value)|
+          if value.kind_of?(Hash)
             value = value.dup
-            association_class = model_class.reflect_on_association(name).class_name.constantize
-            nested = value.inject({}) do |nested,(k,v)|
-              if v.kind_of? Hash
+
+            nested = value.inject({}) do |nested, (k,v)|
+              if v.kind_of?(Hash)
                 value.delete(k)
                 nested[k] = v
               else
-                name = model_class.reflect_on_association(name).table_name.to_sym
-                result_hash[name] = value
+                result[association_table(model_class, name)] = value
               end
               nested
             end
-            result_hash.merge!(tableized_conditions(nested,association_class))
+
+            result.merge!(tableized_conditions(nested, association_class(model_class, name)))
           else
-            result_hash[name] = value
+            result[name] = value
           end
-          result_hash
+
+          result
         end
       end
 
@@ -111,6 +113,14 @@ module CanCan
       end
 
       private
+
+      def association_class(model_class, association)
+        model_class.reflect_on_association(association).class_name.constantize
+      end
+
+      def association_table(model_class, association)
+        model_class.reflect_on_association(association).table_name.to_sym
+      end
 
       def override_scope
         rule = rule_with_active_record_conditions(@rules)
