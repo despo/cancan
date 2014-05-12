@@ -23,9 +23,9 @@ module CanCan
       end
 
       def database_records
-        if @rules.size == 0
-          @model_class.where(:_id => {'$exists' => false, '$type' => 7}) # return no records in Mongoid
-        elsif @rules.size == 1 && @rules[0].conditions.is_a?(Mongoid::Criteria)
+        if @rules.empty?
+          no_records
+        elsif single_rule_with_mongoid_conditions
           @rules[0].conditions
         else
           # we only need to process can rules if
@@ -44,6 +44,17 @@ module CanCan
           end
         end
       end
+
+      private
+
+      def no_records
+        @model_class.where(:_id => {'$exists' => false, '$type' => 7})
+      end
+
+      def single_rule_with_mongoid_conditions
+        @rules.size == 1 && @rules[0].conditions.is_a?(Mongoid::Criteria)
+      end
+
     end
   end
 end
