@@ -54,16 +54,16 @@ module CanCan
       def conditions
         if @rules.size == 1 && @rules.first.base_behavior
           # Return the conditions directly if there's just one definition
-          tableized_conditions(@rules.first.conditions).dup
+          tableized_conditions(@rules.first.conditions)
         else
           @rules.reverse.inject(false_sql) do |sql, rule|
-            merge_conditions(sql, tableized_conditions(rule.conditions).dup, rule.base_behavior)
+            merge_conditions(sql, tableized_conditions(rule.conditions), rule.base_behavior)
           end
         end
       end
 
       def tableized_conditions(conditions, model_class = @model_class)
-        return conditions unless conditions.kind_of?(Hash)
+        return conditions.dup unless conditions.kind_of?(Hash)
 
         conditions.inject({}) do |result, (name, value)|
           if value.kind_of?(Hash)
