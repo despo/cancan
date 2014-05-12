@@ -95,7 +95,7 @@ module CanCan
         @rules.each do |rule|
           merge_joins(joins_hash, rule.associations_hash)
         end
-        clean_joins(joins_hash) unless joins_hash.empty?
+        clean_joins(joins_hash)
       end
 
       def database_records
@@ -181,10 +181,13 @@ module CanCan
 
       # Removes empty hashes and moves everything into arrays.
       def clean_joins(joins_hash)
+        return if joins_hash.empty?
+
         joins_hash.inject([]) do |joins, (name, nested)|
           joins << (nested.empty? ? name : {name => clean_joins(nested)})
         end
       end
+
     end
   end
 end
